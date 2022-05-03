@@ -1,0 +1,288 @@
+#include <stdio.h>
+#include <iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "shader.h"
+#include "water_surface.h"
+#include "ray.h"
+#include "cube.h"
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void processInput(GLFWwindow *window);
+static void glfw_error_callback(int error, const char *description)
+{
+    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+// settings
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 720;
+
+WaterSurface *water_surface_ptr = nullptr;
+Cube *cube_ptr = nullptr;
+glm::mat4 *mat = nullptr;
+glm::vec3 camera_pos(0.0f, 2.0f, 2.0f);
+static float height = 0.018f;
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
+    double x = 0;
+    double y = 0;
+    glfwGetCursorPos(window, &x, &y);
+    Ray ray = Ray::ScreenPointToRay(*mat, glm::vec2(SCR_WIDTH, SCR_HEIGHT), glm::vec2(x, SCR_HEIGHT - y), camera_pos);
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        std::cout << "mouse pressed"
+                  << " " << x << " " << y << std::endl;
+        glm::vec3 hit_point;
+        if (water_surface_ptr->Hit(ray, hit_point))
+        {
+            std::cout << hit_point.x << " " << hit_point.y << " " << hit_point.z << std::endl;
+            water_surface_ptr->CreateRipples(hit_point, height);
+        }
+    }
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+
+        glm::vec3 hit_point;
+        if (cube_ptr->Hit(ray, hit_point))
+        {
+            std::cout << "hit cube" << std::endl;
+            // cube_ptr->SetPressed(true);
+
+            glm::vec3 surface_hit_point;
+            water_surface_ptr->Hit(ray, surface_hit_point);
+            // cube_ptr->SetCubeMove(true);
+            // if (glm::length(glm::cross(ray.Direction(), cube_ptr->GetPosition() - ray.Origin())) < 0.8f)
+            // {
+            //    cube_ptr->SetCubeMove(true);
+            // }
+            // else
+            // {
+            //     cube_ptr->SetCubeMove(false);
+            // }
+
+            cube_ptr->SetPosition(cube_ptr->GetPosition() + glm::vec3(0.2f, 0, 0));
+            // cube_ptr->SetOffset(surface_hit_point - cube_ptr->GetPosition());
+            //  cube_ptr->SetOffset()
+
+            // 			Ray ray=Camera.main.ScreenPointToRay (Input.mousePosition);
+            // if(Vector3.Cross(ray.direction, transform.position - ray.origin).magnitude<0.8f)	cube_move=true;
+            // else 																				cube_move=false;
+            // offset = Input.mousePosition - Camera.main.WorldToScreenPoint (transform.position);
+        }
+    }
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        cube_ptr->SetPressed(false);
+        cube_ptr->SetCubeMove(false);
+    }
+}
+int main()
+{
+
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // glfw window creation
+    // --------------------
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    // configure global opengl state
+    // -----------------------------
+    glEnable(GL_DEPTH_TEST);
+
+    int pool_size = 100;
+    WaterSurface water_surface(pool_size, 2.0f);
+    Cube cube(glm::vec3(0.0f, 0, 0), glm::vec3(0.1f));
+    water_surface_ptr = &water_surface;
+    cube_ptr = &cube;
+    mat = new glm::mat4(1.0f);
+
+    // build and compile our shader zprogram
+    // ------------------------------------
+    Shader water_shader("/home/leo/simple_shallow_wave_model/shader/pipeline_test.vs", "/home/leo/simple_shallow_wave_model/shader/pipeline_test.fs");
+    Shader height_map_shader("/home/leo/simple_shallow_wave_model/shader/height_map.vs", "/home/leo/simple_shallow_wave_model/shader/height_map.fs");
+    Shader cube_shader("/home/leo/simple_shallow_wave_model/shader/cube.vs", "/home/leo/simple_shallow_wave_model/shader/cube.fs");
+
+
+    // cube
+    // --------------------------------------
+    float* cube_vertices = cube.GetVertices();
+    int cube_vertices_count = cube.GetVerticesCount();
+
+    unsigned int cube_VBO, cube_VAO;
+    glGenVertexArrays(1, &cube_VAO);
+    glGenBuffers(1, &cube_VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, cube_VBO);
+    glBufferData(GL_ARRAY_BUFFER, 6 * cube_vertices_count * sizeof(float), cube_vertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(cube_VAO);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+
+    // water surface
+    // -----------------------------
+    float *water_surface_vertices = water_surface.GetVertices();
+    unsigned int *water_surface_indices = water_surface.GetIndices();
+    int water_surface_triangle_count = water_surface.GetTriangleCount();
+    int water_surface_vertices_count = water_surface.GetVerticesCount();
+
+    unsigned int water_VBO, water_VAO, water_EBO;
+    glGenVertexArrays(1, &water_VAO);
+    glGenBuffers(1, &water_VBO);
+    glGenBuffers(1, &water_EBO);
+
+    glBindVertexArray(water_VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, water_VBO);
+    glBufferData(GL_ARRAY_BUFFER, 6 * water_surface_vertices_count * sizeof(float), water_surface_vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, water_EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * water_surface_triangle_count * sizeof(unsigned int), water_surface_indices, GL_STATIC_DRAW);
+
+    // position attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+
+    // normal attribute
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+
+    // glBindVertexArray(0);
+    // render loop
+    // -----------
+    while (!glfwWindowShouldClose(window))
+    {
+
+        // input
+        // -----
+        processInput(window);
+
+        // render
+        // ------
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // MVP matrix
+        glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 view = glm::mat4(1.0f);
+        glm::mat4 projection = glm::mat4(1.0f);
+        view = glm::lookAt(camera_pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        *mat = projection * view * model;
+        // light
+        static glm::vec3 light_color(1.0f, 1.0f, 1.0f);
+        static glm::vec3 light_pos(0.0f, 5.0f, 7.0f);
+
+        // render water
+        water_shader.use();
+        water_shader.setVec3("objectColor", 11.0f / 255.0f, 45.0f / 255.0f, 100.0f / 255.0f);
+        water_shader.setVec3("lightColor", light_color);
+        water_shader.setVec3("lightPos", light_pos);
+        water_shader.setVec3("viewPos", camera_pos);
+        water_shader.setMat4("model", model);
+        water_shader.setMat4("view", view);
+        water_shader.setMat4("projection", projection);
+        glBindVertexArray(water_VAO);
+        glDrawElements(GL_TRIANGLES, water_surface_triangle_count * 3, GL_UNSIGNED_INT, 0);
+
+
+        // render cube
+        cube_shader.use();
+        cube_shader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        cube_shader.setVec3("lightColor", light_color);
+        cube_shader.setVec3("lightPos", light_pos);
+        cube_shader.setVec3("viewPos", camera_pos);
+        cube_shader.setMat4("model", model);
+        cube_shader.setMat4("view", view);
+        cube_shader.setMat4("projection", projection);
+        glBindVertexArray(cube_VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // -------------------------------------------------------------------------------
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        // update
+        water_surface.Update();
+        glBindBuffer(GL_ARRAY_BUFFER, water_VBO);
+        glBufferData(GL_ARRAY_BUFFER, 6 * water_surface_vertices_count * sizeof(float), nullptr, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * water_surface_vertices_count * sizeof(float), water_surface_vertices);
+
+        glBindBuffer(GL_ARRAY_BUFFER, cube_VBO);
+        glBufferData(GL_ARRAY_BUFFER, 6 * cube_vertices_count * sizeof(float), nullptr, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * cube_vertices_count * sizeof(float), cube_vertices);
+    }
+
+    // optional: de-allocate all resources once they've outlived their purpose:
+    // ------------------------------------------------------------------------
+    glDeleteVertexArrays(1, &water_VAO);
+    glDeleteBuffers(1, &water_VBO);
+    glDeleteBuffers(1, &water_EBO);
+
+    glDeleteVertexArrays(1, &cube_VAO);
+    glDeleteBuffers(1, &cube_VBO);
+
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
+    glfwTerminate();
+    return 0;
+}
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
+}
