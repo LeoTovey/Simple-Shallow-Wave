@@ -102,7 +102,7 @@ int main(int, char **)
 
     int pool_size = 100;
     WaterSurface water_surface(pool_size, 2.0f);
-    Cube cube(glm::vec3(0.0f, 0, 0), glm::vec3(0.1f));
+    Cube cube(glm::vec3(0.0f, 0.02f, 0), glm::vec3(0.1f));
     water_surface_ptr = &water_surface;
     cube_ptr = &cube;
     mat = new glm::mat4(1.0f);
@@ -285,7 +285,7 @@ int main(int, char **)
         glBindVertexArray(water_VAO);
         glDrawElements(GL_TRIANGLES, water_surface_triangle_count * 3, GL_UNSIGNED_INT, 0);
 
-        water_surface.Update();
+        water_surface.Update(cube);
         glBindBuffer(GL_ARRAY_BUFFER, water_VBO);
         glBufferData(GL_ARRAY_BUFFER, 6 * water_surface_vertices_count * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * water_surface_vertices_count * sizeof(float), water_surface_vertices);

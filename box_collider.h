@@ -17,6 +17,8 @@ public:
     BoxCollider(glm::vec3 min_pos, glm::vec3 max_pos);
     bool Hit(const Ray& ray, glm::vec3& hit_point);
     void SetAABBPosition(const glm::vec3& min_pos,const glm::vec3& max_pos);
+    const glm::vec3& GetMinPos() const;
+    const glm::vec3& GetMaxPos() const;
 };
 
 
