@@ -109,9 +109,13 @@ int main(int, char **)
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader water_shader("/home/leo/simple_shallow_wave_model/shader/pipeline_test.vs", "/home/leo/simple_shallow_wave_model/shader/pipeline_test.fs");
+//    Shader water_shader("/home/leo/simple_shallow_wave_model/shader/pipeline_test.vs", "/home/leo/simple_shallow_wave_model/shader/pipeline_test.fs");
+//    Shader height_map_shader("/home/leo/simple_shallow_wave_model/shader/height_map.vs", "/home/leo/simple_shallow_wave_model/shader/height_map.fs");
+//    Shader cube_shader("/home/leo/simple_shallow_wave_model/shader/cube.vs", "/home/leo/simple_shallow_wave_model/shader/cube.fs");
+
+    Shader water_shader("../../shader/pipeline_test.vs", "../../shader/pipeline_test.fs");
     Shader height_map_shader("/home/leo/simple_shallow_wave_model/shader/height_map.vs", "/home/leo/simple_shallow_wave_model/shader/height_map.fs");
-    Shader cube_shader("/home/leo/simple_shallow_wave_model/shader/cube.vs", "/home/leo/simple_shallow_wave_model/shader/cube.fs");
+    Shader cube_shader("../../shader/cube.vs", "../../shader/cube.fs");
 
     // water surface
     // -----------------------------
