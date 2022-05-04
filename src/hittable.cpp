@@ -1,12 +1,12 @@
 
-#include "box_collider.h"
+#include "hittable.h"
 #include <math.h>
-BoxCollider::BoxCollider(glm::vec3 min_pos, glm::vec3 max_pos)
+Hittable::Hittable(glm::vec3 min_pos, glm::vec3 max_pos)
     : min_pos_(min_pos), max_pos_(max_pos)
 {
 }
 
-bool BoxCollider::Hit(const Ray &ray, glm::vec3 &hit_point)
+bool Hittable::Hit(const Ray &ray, glm::vec3 &hit_point)
 {
     const glm::vec3 &min = min_pos_;        // aabb包围盒最小点坐标
     const glm::vec3 &max = max_pos_;        // aabb包围盒最大点坐标
@@ -80,17 +80,17 @@ bool BoxCollider::Hit(const Ray &ray, glm::vec3 &hit_point)
     return false;
 }
 
-void BoxCollider::SetAABBPosition(const glm::vec3 &min_pos, const glm::vec3 &max_pos)
+void Hittable::SetAABBPosition(const glm::vec3 &min_pos, const glm::vec3 &max_pos)
 {
     min_pos_ = min_pos;
     max_pos_ = max_pos;
 }
 
-const glm::vec3& BoxCollider::GetMinPos() const
+const glm::vec3& Hittable::GetMinPos() const
 {
     return min_pos_;
 }
-const glm::vec3& BoxCollider::GetMaxPos() const
+const glm::vec3& Hittable::GetMaxPos() const
 {
     return max_pos_;
 }

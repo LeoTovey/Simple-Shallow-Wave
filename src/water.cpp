@@ -1,16 +1,16 @@
-#include "water_surface.h"
+#include "water.h"
 #include <math.h>
 #include <iostream>
 #include <time.h>
 #include <cstdlib>
-#include "box_collider.h"
+#include "hittable.h"
 #include "GLFW/glfw3.h"
 
-WaterSurface::WaterSurface(int size, int surface_size)
+Water::Water(int size, int surface_size)
     : size_(size), vertices_(nullptr), indices_(nullptr), triangle_count_(0), vertices_count_(0), surface_size_(surface_size),
       cg_mask_(size, std::vector<bool>(size)), cg_p_(size, std::vector<float>(size)), cg_r_(size, std::vector<float>(size)),
       cg_Ap_(size, std::vector<float>(size)), low_h_(size, std::vector<float>(size)),
-      BoxCollider(glm::vec3(-surface_size * 0.5f, 0, -surface_size * 0.5f), glm::vec3(surface_size * 0.5f, 0, surface_size * 0.5f))
+      Hittable(glm::vec3(-surface_size * 0.5f, 0, -surface_size * 0.5f), glm::vec3(surface_size * 0.5f, 0, surface_size * 0.5f))
 {
     vertices_ = new float[size * size * 6];
     indices_ = new unsigned int[(size - 1) * (size - 1) * 6];
@@ -19,7 +19,7 @@ WaterSurface::WaterSurface(int size, int surface_size)
     BuildMesh();
 }
 
-WaterSurface::~WaterSurface()
+Water::~Water()
 {
     delete (vertices_);
     delete (indices_);
@@ -27,7 +27,7 @@ WaterSurface::~WaterSurface()
     delete (new_h_);
 }
 
-void WaterSurface::BuildMesh()
+void Water::BuildMesh()
 {
 
     float dx = surface_size_ / (size_ - 1);
@@ -79,22 +79,22 @@ void WaterSurface::BuildMesh()
     }
 }
 
-float *WaterSurface::GetVertices() const
+float *Water::GetVertices() const
 {
     return vertices_;
 }
 
-unsigned int *WaterSurface::GetIndices() const
+unsigned int *Water::GetIndices() const
 {
     return indices_;
 }
 
-int WaterSurface::GetTriangleCount() const
+int Water::GetTriangleCount() const
 {
     return triangle_count_;
 }
 
-int WaterSurface::GetVerticesCount() const
+int Water::GetVerticesCount() const
 {
     return vertices_count_;
 }
@@ -127,7 +127,7 @@ float GetX(int i, int j, const std::vector<std::vector<float>>& v)
 
     return v[x][y];
 }
-void WaterSurface::Update(const Cube& cube)
+void Water::Update(const Cube& cube)
 {
     // UpdateHeight();
     // UpdateNormal();
@@ -187,7 +187,7 @@ void WaterSurface::Update(const Cube& cube)
 	//More TODO here.
 }
 
-void WaterSurface::CalLowHeightAndLabelMask(const Cube& cube)
+void Water::CalLowHeightAndLabelMask(const Cube& cube)
 {
     const glm::vec3& min_pos = cube.GetMinPos();
     const glm::vec3& max_pos = cube.GetMaxPos();
@@ -218,7 +218,7 @@ void WaterSurface::CalLowHeightAndLabelMask(const Cube& cube)
     
 }
 
-void WaterSurface::Update(unsigned char *height_map)
+void Water::Update(unsigned char *height_map)
 {
     //Update();
     for (int i = 0; i < size_; i++)
@@ -234,7 +234,7 @@ void WaterSurface::Update(unsigned char *height_map)
     }
 }
 
-void WaterSurface::UpdateVertices()
+void Water::UpdateVertices()
 {
     for (int i = 0; i < size_; i++)
     {
@@ -247,7 +247,7 @@ void WaterSurface::UpdateVertices()
     }
 }
 
-void WaterSurface::UpdateHeight()
+void Water::UpdateHeight()
 {
     for (int i = 0; i < size_; i++)
     {
@@ -268,7 +268,7 @@ void WaterSurface::UpdateHeight()
     }
 }
 
-void WaterSurface::CalNewHeight()
+void Water::CalNewHeight()
 {
     for (int i = 0; i < size_; i++)
     {
@@ -280,7 +280,7 @@ void WaterSurface::CalNewHeight()
     }
 }
 
-void WaterSurface::SetHeight(int i, int j, float height)
+void Water::SetHeight(int i, int j, float height)
 {
     int x = i;
     int y = j;
@@ -309,7 +309,7 @@ void WaterSurface::SetHeight(int i, int j, float height)
     vertices_[index + 1] = height;
 }
 
-float WaterSurface::GetHeight(int i, int j) const
+float Water::GetHeight(int i, int j) const
 {
     int x = i;
     int y = j;
@@ -338,7 +338,7 @@ float WaterSurface::GetHeight(int i, int j) const
     return vertices_[index + 1];
 }
 
-void WaterSurface::CreateRandomRipples(float height)
+void Water::CreateRandomRipples(float height)
 {
     int i = rand() % size_;
     int j = rand() % size_;
@@ -356,7 +356,7 @@ void WaterSurface::CreateRandomRipples(float height)
     SetHeight(i - 1, j + 1, GetHeight(i - 1, j + 1) - dh);
 }
 
-glm::vec3 WaterSurface::GetVertex(int i, int j) const
+glm::vec3 Water::GetVertex(int i, int j) const
 {
     int x = i;
     int y = j;
@@ -382,7 +382,7 @@ glm::vec3 WaterSurface::GetVertex(int i, int j) const
     return glm::vec3(vertices_[index], vertices_[index + 1], vertices_[index + 2]);
 }
 
-std::vector<Triangle> WaterSurface::GetAdjacentTriangles(int i, int j) const
+std::vector<Triangle> Water::GetAdjacentTriangles(int i, int j) const
 {
     int gap = 128;
     std::vector<Triangle> triangles;
@@ -395,13 +395,13 @@ std::vector<Triangle> WaterSurface::GetAdjacentTriangles(int i, int j) const
     return triangles;
 }
 
-glm::vec3 WaterSurface::CalculateTriangleNormal(Triangle T) const
+glm::vec3 Water::CalculateTriangleNormal(Triangle T) const
 {
     glm::vec3 N = glm::cross(T.b - T.a, T.c - T.a);
     return N;
 }
 
-void WaterSurface::SetNormal(int i, int j, glm::vec3 normal)
+void Water::SetNormal(int i, int j, glm::vec3 normal)
 {
     int index = (i * size_ + j) * 6;
     vertices_[index + 3] = normal.x;
@@ -409,7 +409,7 @@ void WaterSurface::SetNormal(int i, int j, glm::vec3 normal)
     vertices_[index + 5] = normal.z;
 }
 
-void WaterSurface::UpdateNormal()
+void Water::UpdateNormal()
 {
     for (int i = 0; i < size_; i++)
     {
@@ -434,7 +434,7 @@ void WaterSurface::UpdateNormal()
     }
 }
 
-void WaterSurface::CreateRipples(const glm::vec3 &world_pos, float height)
+void Water::CreateRipples(const glm::vec3 &world_pos, float height)
 {
     float dx = surface_size_ / (size_ - 1);
     int i = (world_pos.x + surface_size_ * 0.5f) / dx + 0.5;
@@ -453,7 +453,7 @@ void WaterSurface::CreateRipples(const glm::vec3 &world_pos, float height)
     SetHeight(i - 1, j + 1, GetHeight(i - 1, j + 1) - dh);
 }
 
-void WaterSurface::ATimes(const std::vector<std::vector<bool>> &mask,
+void Water::ATimes(const std::vector<std::vector<bool>> &mask,
                           const std::vector<std::vector<float>> &x, std::vector<std::vector<float>> &Ax,
                           int li, int ui, int lj, int uj)
 {
@@ -478,7 +478,7 @@ void WaterSurface::ATimes(const std::vector<std::vector<bool>> &mask,
     }
 }
 
-void WaterSurface::ConjugateGradient(std::vector<std::vector<bool>> &mask, std::vector<std::vector<float>> &b,
+void Water::ConjugateGradient(std::vector<std::vector<bool>> &mask, std::vector<std::vector<float>> &b,
                                      std::vector<std::vector<float>> &x, int li, int ui, int lj, int uj)
 {
     // Solve the Laplacian problem by CG.
@@ -529,7 +529,7 @@ void WaterSurface::ConjugateGradient(std::vector<std::vector<bool>> &mask, std::
     }
 }
 
-float WaterSurface::Dot(std::vector<std::vector<bool>> &mask,
+float Water::Dot(std::vector<std::vector<bool>> &mask,
                         std::vector<std::vector<float>> &x, std::vector<std::vector<float>> &y,
                         int li, int ui, int lj, int uj)
 {

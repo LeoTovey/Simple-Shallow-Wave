@@ -5,7 +5,7 @@ IF (WIN32)
     find_package(OpenGL REQUIRED)
 ENDIF ()
 
-add_executable(${PROJECT_NAME} main.cpp glad.c water_surface.cpp box_collider.cpp ray.cpp cube.cpp)
+add_executable(${PROJECT_NAME} main.cpp glad.c water.cpp hittable.cpp ray.cpp cube.cpp)
 
 IF (WIN32)
 	MESSAGE(STATUS "Now is windows")

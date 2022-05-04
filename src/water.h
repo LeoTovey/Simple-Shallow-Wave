@@ -2,7 +2,7 @@
 #define WATER_SURFACE_H
 
 #include "glm.hpp"
-#include "box_collider.h"
+#include "hittable.h"
 #include "cube.h"
 #include <vector>
 
@@ -11,7 +11,7 @@ struct Triangle
     glm::vec3 a, b, c;
 };
 
-class WaterSurface : public BoxCollider
+class Water : public Hittable
 {
 private:
     int size_;
@@ -61,8 +61,8 @@ private:
     void CalLowHeightAndLabelMask(const Cube& cube);
 
 public:
-    WaterSurface(int size, int surface_size);
-    ~WaterSurface();
+    Water(int size, int surface_size);
+    ~Water();
 
     float *GetVertices() const;
     unsigned int *GetIndices() const;

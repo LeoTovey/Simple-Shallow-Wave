@@ -43,7 +43,7 @@ static float cube_vertices[216] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
                 -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f};
 
 Cube::Cube(glm::vec3 position, glm::vec3 size)
-    : position_(position), size_(size), BoxCollider(position - 0.5f * size, position + 0.5f * size)
+    : position_(position), size_(size), Hittable(position - 0.5f * size, position + 0.5f * size)
 {
     BuildMesh();
 }

@@ -1,9 +1,9 @@
 #ifndef CUBE_H
 #define CUBE_H
 
-#include "box_collider.h"
+#include "hittable.h"
 
-class Cube : public BoxCollider
+class Cube : public Hittable
 {
 private:
     glm::vec3 position_;

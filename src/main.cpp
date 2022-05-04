@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <iostream>
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
@@ -8,15 +7,13 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb_image/include/stb_image.h"
 
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
-#include "gtc/type_ptr.hpp"
 #include "shader.h"
-#include "water_surface.h"
-#include "ray.h"
-#include "cube.h"
+#include "water.h"
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 static void glfw_error_callback(int error, const char *description)
@@ -25,10 +22,10 @@ static void glfw_error_callback(int error, const char *description)
 }
 
 // settings
-const unsigned int SCR_WIDTH = 1280;
-const unsigned int SCR_HEIGHT = 720;
+int SCR_WIDTH = 1280;
+int SCR_HEIGHT = 720;
 
-WaterSurface *water_surface_ptr = nullptr;
+Water *water_surface_ptr = nullptr;
 Cube* cube_ptr = nullptr;
 glm::mat4 *mat = nullptr;
 glm::vec3 camera_pos(0.0f, 2.0f, 2.0f);
@@ -66,8 +63,8 @@ int main(int, char **)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
     // Create window with graphics context
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Simple Shallow Wave Model", NULL, NULL);
-    if (window == NULL)
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Simple Shallow Wave Model", nullptr, nullptr);
+    if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
@@ -97,11 +94,8 @@ int main(int, char **)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    // Our state
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
     int pool_size = 100;
-    WaterSurface water_surface(pool_size, 2.0f);
+    Water water_surface(pool_size, 2.0f);
     Cube cube(glm::vec3(0.0f, 0.02f, 0), glm::vec3(0.1f));
     water_surface_ptr = &water_surface;
     cube_ptr = &cube;
@@ -114,7 +108,7 @@ int main(int, char **)
 //    Shader cube_shader("/home/leo/simple_shallow_wave_model/shader/cube.vs", "/home/leo/simple_shallow_wave_model/shader/cube.fs");
 
     Shader water_shader("../../shader/pipeline_test.vs", "../../shader/pipeline_test.fs");
-    Shader height_map_shader("/home/leo/simple_shallow_wave_model/shader/height_map.vs", "/home/leo/simple_shallow_wave_model/shader/height_map.fs");
+    //Shader height_map_shader("/home/leo/simple_shallow_wave_model/shader/height_map.vs", "/home/leo/simple_shallow_wave_model/shader/height_map.fs");
     Shader cube_shader("../../shader/cube.vs", "../../shader/cube.fs");
 
     // water surface
@@ -428,4 +422,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
 }
